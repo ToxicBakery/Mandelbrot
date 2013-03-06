@@ -33,7 +33,7 @@ public class MainActivity extends RajawaliFragmentActivity {
 		return true;
 	}
 
-	public class MandelRenderer extends RajawaliRenderer implements
+	public static class MandelRenderer extends RajawaliRenderer implements
 			FPSUpdateListener {
 
 		public final ScaleListener scaleListener;
@@ -50,10 +50,8 @@ public class MainActivity extends RajawaliFragmentActivity {
 
 		@Override
 		protected void initScene() {
-			final MandelMaterial material = new MandelMaterial();
-
 			mPlane = new Plane(1, 1, 1, 1, 1);
-			mPlane.setMaterial(material);
+			mPlane.setMaterial(new MandelMaterial());
 			addChild(mPlane);
 		}
 
@@ -76,11 +74,9 @@ public class MainActivity extends RajawaliFragmentActivity {
 
 	}
 
-	public class MandelMaterial extends AMaterial {
+	public static class MandelMaterial extends AMaterial {
 		protected static final String mVShader = 
 			"uniform mat4 uMVPMatrix;\n" + 
-			"uniform int width;\n" + 
-			"uniform int height;\n" +
 
 			"attribute vec4 aPosition;\n" + 
 			"attribute vec2 aTextureCoord;\n" + 
@@ -97,7 +93,9 @@ public class MainActivity extends RajawaliFragmentActivity {
 
 		protected static final String mFShader = 
 			"precision mediump float;\n" +
-			"varying vec2 vTextureCoord;\n" + "uniform sampler2D uDiffuseTexture;\n" + "varying vec4 vColor;\n" +
+			"varying vec2 vTextureCoord;\n" + 
+			"uniform sampler2D uDiffuseTexture;\n" + 
+			"varying vec4 vColor;\n" +
 
 			"float xtemp;\n" + 
 			"float x0;\n" + 
@@ -112,8 +110,8 @@ public class MainActivity extends RajawaliFragmentActivity {
 			"	iteration = 0.0;\n" +
 			"	x = 0.0;\n" +
 			"	y = 0.0;\n" +
-			"	x0 = (vTextureCoord.x / 1.0 * 3.5) - 2.5;\n" + 
-			"	y0 = (vTextureCoord.y / 1.0 * 2.0) - 1.0;\n" + 
+			"	x0 = (vTextureCoord.x * 3.5) - 2.5;\n" + 
+			"	y0 = (vTextureCoord.y * 2.0) - 1.0;\n" + 
 			"	while(iteration < 100.0 && x*x + y*y < 2.0*2.0) {\n" + 
 			"		xtemp = x*x - y*y + x0;\n" + 
 			"		y = 2.0*x*y + y0;\n" + 
@@ -129,12 +127,6 @@ public class MainActivity extends RajawaliFragmentActivity {
 
 		public MandelMaterial() {
 			super(mVShader, mFShader, false);
-			setShaders();
-		}
-
-		public MandelMaterial(String vertexShader, String fragmentShader) {
-			super(vertexShader, fragmentShader, false);
-			setShaders();
 		}
 	}
 }
