@@ -50,7 +50,7 @@ public class MainActivity extends RajawaliFragmentActivity {
 
 		@Override
 		protected void initScene() {
-			mPlane = new Plane(1, 1, 1, 1, 1);
+			mPlane = new Plane(1, 1, 1, 1);
 			mPlane.setMaterial(new MandelMaterial());
 			addChild(mPlane);
 		}
