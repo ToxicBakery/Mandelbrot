@@ -1,17 +1,21 @@
 package com.ToxicBakery.apps.mandelbrot;
 
+import java.text.DecimalFormat;
+
 import rajawali.Camera2D;
-import rajawali.RajawaliFragmentActivity;
-import rajawali.materials.AMaterial;
+import rajawali.RajawaliActivity;
+import rajawali.materials.Material;
+import rajawali.materials.shaders.FragmentShader;
+import rajawali.materials.shaders.VertexShader;
 import rajawali.primitives.Plane;
 import rajawali.renderer.RajawaliRenderer;
-import rajawali.util.FPSUpdateListener;
+import rajawali.util.OnFPSUpdateListener;
 import android.content.Context;
 import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 
-public class MainActivity extends RajawaliFragmentActivity {
+public class MainActivity extends RajawaliActivity {
 
 	private ScaleGestureDetector mScaleDetector;
 
@@ -34,32 +38,31 @@ public class MainActivity extends RajawaliFragmentActivity {
 	}
 
 	public class MandelRenderer extends RajawaliRenderer implements
-			FPSUpdateListener {
+			OnFPSUpdateListener {
 
 		public final ScaleListener scaleListener;
+
+		private final DecimalFormat mDFormat;
 
 		private Plane mPlane;
 
 		public MandelRenderer(Context context) {
 			super(context);
+			mDFormat = new DecimalFormat("#.##");
+
 			scaleListener = new ScaleListener();
-			setCamera(new Camera2D());
-			setFPSUpdateListener(this);
 			setFrameRate(60);
+			setFPSUpdateListener(this);
 		}
 
 		@Override
 		protected void initScene() {
-			final MandelMaterial material = new MandelMaterial();
+			getCurrentScene().switchCamera(new Camera2D());
 
-			mPlane = new Plane(1, 1, 1, 1, 1);
-			mPlane.setMaterial(material);
-			addChild(mPlane);
-		}
-
-		@Override
-		public void onFPSUpdate(double fps) {
-			System.out.println(fps);
+			final Plane plane = new Plane(1, 1, 1, 1, 1);
+			plane.setMaterial(new MandelMaterial());
+			plane.setDoubleSided(true);
+			addChild(plane);
 		}
 
 		public class ScaleListener extends
@@ -67,16 +70,31 @@ public class MainActivity extends RajawaliFragmentActivity {
 
 			@Override
 			public boolean onScale(ScaleGestureDetector detector) {
-				float scale = mPlane.getScaleX() * detector.getScaleFactor();
+				float scale = (float) (mPlane.getScaleX() * detector
+						.getScaleFactor());
 				scale = Math.max(0.1f, Math.min(scale, 5.0f));
 				mPlane.setScale(scale);
+
 				return true;
 			}
 		}
 
+		@Override
+		public void onFPSUpdate(double fps) {
+			System.out.println("~fps: " + mDFormat.format(fps));
+		}
+
 	}
 
-	public class MandelMaterial extends AMaterial {
+	/**
+	 * Simple Mandlebrot shader translated from wikipedia.
+	 * 
+	 * @see <a
+	 *      href="http://en.wikipedia.org/wiki/Mandelbrot_set#Escape_time_algorithm">Mandelbrot</a>
+	 * 
+	 */
+	public class MandelMaterial extends Material {
+		// @formatter:off
 		protected static final String mVShader = 
 			"uniform mat4 uMVPMatrix;\n" + 
 			"uniform int width;\n" + 
@@ -97,7 +115,9 @@ public class MainActivity extends RajawaliFragmentActivity {
 
 		protected static final String mFShader = 
 			"precision mediump float;\n" +
-			"varying vec2 vTextureCoord;\n" + "uniform sampler2D uDiffuseTexture;\n" + "varying vec4 vColor;\n" +
+			"varying vec2 vTextureCoord;\n" + 
+			"uniform sampler2D uDiffuseTexture;\n" + 
+			"varying vec4 vColor;\n" +
 
 			"float xtemp;\n" + 
 			"float x0;\n" + 
@@ -114,7 +134,7 @@ public class MainActivity extends RajawaliFragmentActivity {
 			"	y = 0.0;\n" +
 			"	x0 = (vTextureCoord.x / 1.0 * 3.5) - 2.5;\n" + 
 			"	y0 = (vTextureCoord.y / 1.0 * 2.0) - 1.0;\n" + 
-			"	while(iteration < 100.0 && x*x + y*y < 2.0*2.0) {\n" + 
+			"	while(iteration < 15.0 && x*x + y*y < 2.0*2.0) {\n" + 
 			"		xtemp = x*x - y*y + x0;\n" + 
 			"		y = 2.0*x*y + y0;\n" + 
 			"		x = xtemp;\n" + 
@@ -126,15 +146,11 @@ public class MainActivity extends RajawaliFragmentActivity {
 			"	tCol.b = 1.0 - (iteration / 200.0);\n" + 
 			"	gl_FragColor = tCol;\n" + 
 			"}\n";
+		// @formatter:on
 
 		public MandelMaterial() {
-			super(mVShader, mFShader, false);
-			setShaders();
+			super(new VertexShader(mVShader), new FragmentShader(mFShader));
 		}
 
-		public MandelMaterial(String vertexShader, String fragmentShader) {
-			super(vertexShader, fragmentShader, false);
-			setShaders();
-		}
 	}
 }
